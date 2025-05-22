@@ -1,7 +1,7 @@
 import Editor from "./components/Editor";
 import List from "./components/List";
 import Header from "./components/Header";
-import { useState, useRef } from "react";
+import { useState, useRef, useReducer, useCallback } from "react";
 import "./App.css";
 
 const mockData = [
@@ -25,33 +25,52 @@ const mockData = [
   },
 ];
 
+function reducer(state, action) {
+  switch (action.type) {
+    case "create":
+      return [action.data, ...state];
+    case "update":
+      return state.map((item) =>
+        item.id === action.targetId ? { ...item, isDone: !item.isDone } : item
+      );
+    case "delete":
+      return state.filter((item) => item.id !== action.targetId);
+    default:
+      return state;
+  }
+}
+
 function App() {
-  const [todos, setTodos] = useState(mockData);
+  const [todos, dispatch] = useReducer(reducer, mockData);
   const idRef = useRef(3);
 
-  const onCreate = (content) => {
-    const newTodo = {
-      id: idRef.current++,
-      isDone: false,
-      content: content,
-      date: new Date().getTime(),
-    };
+  const onCreate = useCallback((content) => {
+    dispatch({
+      type: "create",
+      data: {
+        id: idRef.current++,
+        isDone: false,
+        content: content,
+        date: new Date().getTime(),
+      },
+    });
+  }, []);
 
-    setTodos([newTodo, ...todos]);
-  };
+  const onUpdate = useCallback((targetId) => {
+    dispatch({
+      type: "update",
+      targetId: targetId,
+    });
+  }, []);
 
-  const onUpdate = (targetId) => {
-    // todos State 값 중 tragetId==id인 TodoItem의 isDone 변경
-    setTodos(
-      todos.map((todo) =>
-        todo.id === targetId ? { ...todo, isDone: !todo.isDone } : todo
-      )
-    );
-  };
-
-  const onDelete = (targetId) => {
-    setTodos(todos.filter((todo) => todo.id !== targetId));
-  };
+  // useCallback을 사용하여 onCreate, onUpdate, onDelete 함수를 메모이제이션
+  // 처음 mount될 때만 생성되고, 이후에는 의존성 배열이 변경될 때만 새로 생성된다.
+  const onDelete = useCallback((targetId) => {
+    dispatch({
+      type: "delete",
+      targetId: targetId,
+    });
+  }, []);
 
   return (
     <div className="App">
