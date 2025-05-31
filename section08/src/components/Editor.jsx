@@ -1,7 +1,9 @@
 import "./Editor.css";
-import { useState, useRef } from "react";
+import { useState, useRef, useContext } from "react";
+import { TodoDispatchContext } from "../App"; // TodoContext 가져오기
 
-const Editor = ({ onCreate }) => {
+const Editor = () => {
+  const { onCreate } = useContext(TodoDispatchContext); // TodoContext에서 데이터 가져오기
   const [content, setContent] = useState("");
   // input에 입력하는 값이 content state에 저장됨
   const contentRef = useRef();
