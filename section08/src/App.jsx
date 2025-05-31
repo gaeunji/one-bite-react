@@ -1,7 +1,14 @@
 import Editor from "./components/Editor";
 import List from "./components/List";
 import Header from "./components/Header";
-import { useState, useRef, useReducer, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useReducer,
+  useCallback,
+  createContext,
+  useMemo,
+} from "react";
 import "./App.css";
 
 const mockData = [
@@ -40,6 +47,9 @@ function reducer(state, action) {
   }
 }
 
+export const TodoStateContext = createContext(); // Context 생성 (컴포넌트 외부)
+export const TodoDispatchContext = createContext(); // Dispatch용 Context 생성
+
 function App() {
   const [todos, dispatch] = useReducer(reducer, mockData);
   const idRef = useRef(3);
@@ -72,11 +82,23 @@ function App() {
     });
   }, []);
 
+  const memoizedDispatch = useMemo(() => {
+    return {
+      onCreate,
+      onUpdate,
+      onDelete,
+    };
+  }, []);
+
   return (
     <div className="App">
       <Header />
-      <Editor onCreate={onCreate} />
-      <List todos={todos} onUpdate={onUpdate} onDelete={onDelete} />
+      <TodoStateContext.Provider value={todos}>
+        <TodoDispatchContext.Provider value={memoizedDispatch}>
+          <Editor />
+          <List />
+        </TodoDispatchContext.Provider>
+      </TodoStateContext.Provider>
     </div>
   );
 }
